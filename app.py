@@ -68,8 +68,17 @@ def set_retriever(nodes, index):
     hybrid_retriever = HybridRetriever(vector_retriever, bm25_retriever)
     return hybrid_retriever
 
-  
-
+def display_results(data):
+    final_list = {}
+    count = 0
+    for i in range(20):
+        count += 1
+        if data[i].metadata['file_name'] not in final_list:
+            final_list[data[i].metadata['file_name']] = data[i].score
+        if count == 10:
+            break
+    for key in final_list:
+        st.write(f"{key} Resume (Score: {final_list[key]:.2f})")
 
 def main():
     """Streamlit app for resume ranking"""
@@ -107,38 +116,41 @@ def main():
 
         retrieved_nodes = hybrid_retriever.retrieve(job_description)
         st.subheader("Top 10 Matching Resumes:")
-        for i, result in enumerate(retrieved_nodes):
-            resume_text = result.text
-            score = result.score
-            name = result.metadata['file_name']
-            st.write(f"{i+1}. {name} Resume (Score: {score:.2f})")
-            st.text(resume_text)
-            if i == 10:
-                break
+        display_results(retrieved_nodes)
+        # for i, result in enumerate(retrieved_nodes):
+        #     resume_text = result.text
+        #     score = result.score
+        #     name = result.metadata['file_name']
+        #     st.write(f"{i+1}. {name} Resume (Score: {score:.2f})")
+        #     st.text(resume_text)
+        #     if i == 10:
+        #         break
         reranked_nodes = reranker.postprocess_nodes(
             retrieved_nodes,
             query_bundle=QueryBundle(job_description),
         )
+        st.subheader("Top 10 Matching Resumes Reranked:")
+        display_results(reranked_nodes)
 
-        if reranked_nodes:
-            st.subheader("Top 10 Matching Resumes Reranked:")
-            final_list = {}
-            count = 0
-            for i in range(20):
-                count += 1
-                if reranked_nodes[i].metadata['file_name'] not in final_list:
-                    final_list[reranked_nodes[i].metadata['file_name']] = reranked_nodes[i].score
-                if count == 10:
-                    break
-            for key in final_list:
-                st.write(f"{key} Resume (Score: {final_list[key]:.2f})")
+        # if reranked_nodes:
+        #     st.subheader("Top 10 Matching Resumes Reranked:")
+        #     final_list = {}
+        #     count = 0
+        #     for i in range(20):
+        #         count += 1
+        #         if reranked_nodes[i].metadata['file_name'] not in final_list:
+        #             final_list[reranked_nodes[i].metadata['file_name']] = reranked_nodes[i].score
+        #         if count == 10:
+        #             break
+        #     for key in final_list:
+        #         st.write(f"{key} Resume (Score: {final_list[key]:.2f})")
                 # score = result.score
                 # resume_text = result.text
                 # name = reranked_nodes[i].metadata['file_name']
                 # st.write(f"{i+1}. {name} Resume (Score: {score:.2f})")
                 # st.text(resume_text)
-        else:
-            st.write("No matching resumes found.")
+        # else:
+        #     st.write("No matching resumes found.")
 
 if __name__ == "__main__":
   main()
