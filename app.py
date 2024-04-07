@@ -71,10 +71,10 @@ def set_retriever(nodes, index):
 def display_results(data):
     final_list = {}
     count = 0
-    for i in range(20):
-        count += 1
+    for i in range(len(data)):
         if data[i].metadata['file_name'] not in final_list:
             final_list[data[i].metadata['file_name']] = data[i].score
+            count += 1
         if count == 10:
             break
     for key in final_list:
