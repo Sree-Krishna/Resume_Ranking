@@ -1,5 +1,5 @@
 import streamlit as st
-# from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.ingestion import IngestionPipeline, IngestionCache
 import faiss
@@ -21,29 +21,30 @@ import asyncio
 
 # set the embedding
 # checkout Voyage embedding, lightweight and high performance
-model_name = 'BAAI/bge-small-en-v1.5'
-# # model_name = 'sentence-transformers/all-MiniLM-L6-v2'
-# Settings.embed_model = HuggingFaceEmbedding(model_name)
-# embed_model = HuggingFaceEmbedding(model_name)
-embed_model = ''
+# model_name = 'BAAI/bge-small-en-v1.5'
+model_name = 'sentence-transformers/all-MiniLM-L6-v2'
+Settings.embed_model = HuggingFaceEmbedding(model_name)
+embed_model = HuggingFaceEmbedding(model_name)
 
 # Function to preprocess and vectorize text (replace with more advanced NLP)
 def preprocess_text(text):
     return text.lower()
 
-# def create_nodes(path='data/resumes'):
-#     # create the pipeline with transformations
-#     pipeline = IngestionPipeline(
-#         transformations=[
-#             TextCleaner(),
-#             SentenceSplitter(chunk_size=512, chunk_overlap=10),
-#             embed_model,
-#         ]
-#     )
-#     documents = SimpleDirectoryReader(path).load_data()
-#     nodes = pipeline.run(documents=documents)
-#     # index = VectorStoreIndex.from_documents(documents, embed_model=embed_model)
-#     return nodes
+@st.cache_resource(show_spinner=False)
+def create_nodes(path='data/resumes'):
+    # create the pipeline with transformations
+    pipeline = IngestionPipeline(
+        transformations=[
+            TextCleaner(),
+            SentenceSplitter(chunk_size=512, chunk_overlap=10),
+            embed_model,
+        ]
+    )
+    with st.spinner(text="Loading the Streamlit docs – hang tight! This should take 1-2 minutes."):
+        documents = SimpleDirectoryReader(path).load_data()
+        nodes = pipeline.run(documents=documents)
+    # index = VectorStoreIndex.from_documents(documents, embed_model=embed_model)
+    return nodes
 
 def set_storage_context(vetcorDb='faiss'):
   
@@ -53,13 +54,14 @@ def set_storage_context(vetcorDb='faiss'):
     vector_store = FaissVectorStore(faiss_index=faiss_index)
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
     return storage_context
-  
+
 def create_index(nodes, storage_context, documents=False):
-    if documents:
-        index = VectorStoreIndex.from_documents(documents=documents, storage_context=storage_context)
-    else:
-        index = index = VectorStoreIndex(nodes, storage_context=storage_context)
-    return index
+    with st.spinner(text="Loading the Streamlit Index – hang tight! This should take 1-2 minutes."):
+        if documents:
+            index = VectorStoreIndex.from_documents(documents=documents, storage_context=storage_context)
+        else:
+            index = index = VectorStoreIndex(nodes, storage_context=storage_context)
+        return index
 
 def set_retriever(nodes, index):
     # retireve the top 20 most similar nodes using embeddings
@@ -90,41 +92,42 @@ def main():
     job_description = st.text_area("Enter Job Description:", height=100)
     job_description = clean_job(job_description)
 
-    # nodes = create_nodes()
-    # storage_context = set_storage_context()
-    # index = create_index(nodes, storage_context)
+    nodes = create_nodes()
+    storage_context = set_storage_context()
+    index = create_index(nodes, storage_context)
 
-    # # save index to disk
-    # index.storage_context.persist()
+    # save index to disk
+    index.storage_context.persist()
 
-    # # load index from disk
-    # vector_store = FaissVectorStore.from_persist_dir("./storage")
-    # storage_context = StorageContext.from_defaults(
-    #     vector_store=vector_store, persist_dir="./storage"
-    # )
-    # index = load_index_from_storage(storage_context=storage_context)
+    # load index from disk
+    vector_store = FaissVectorStore.from_persist_dir("./storage")
+    storage_context = StorageContext.from_defaults(
+        vector_store=vector_store, persist_dir="./storage"
+    )
+    index = load_index_from_storage(storage_context=storage_context)
 
-    # # set retriever
-    # hybrid_retriever = set_retriever(nodes, index)
+    # set retriever
+    hybrid_retriever = set_retriever(nodes, index)
 
-    # # set reranker
-    # rerank_model = 'cross-encoder/ms-marco-MiniLM-L-2-v2'
-    # # rerank_model = 'BAAI/bge-reranker-base'
-    # reranker = SentenceTransformerRerank(top_n=20, model=rerank_model)
+    # set reranker
+    rerank_model = 'cross-encoder/ms-marco-MiniLM-L-2-v2'
+    # rerank_model = 'BAAI/bge-reranker-base'
+    reranker = SentenceTransformerRerank(top_n=20, model=rerank_model)
 
-    # if st.button("Rank Resumes"):
-    #     # Preprocess and vectorize the job description
-    #     # job_description_vector = vectorizer.transform([job_description])[0]
+    if st.button("Rank Resumes"):
+        # Preprocess and vectorize the job description
+        # job_description_vector = vectorizer.transform([job_description])[0]
+        with st.spinner("processing..."):
+            retrieved_nodes = hybrid_retriever.retrieve(job_description)
+            st.subheader("Top 10 Matching Resumes:")
+            display_results(retrieved_nodes)
 
-    #     retrieved_nodes = hybrid_retriever.retrieve(job_description)
-    #     st.subheader("Top 10 Matching Resumes:")
-    #     display_results(retrieved_nodes)
-    #     reranked_nodes = reranker.postprocess_nodes(
-    #         retrieved_nodes,
-    #         query_bundle=QueryBundle(job_description),
-    #     )
-    #     st.subheader("Top 10 Matching Resumes Reranked:")
-    #     display_results(reranked_nodes)
+            reranked_nodes = reranker.postprocess_nodes(
+                retrieved_nodes,
+                query_bundle=QueryBundle(job_description),
+            )
+            st.subheader("Top 10 Matching Resumes Reranked:")
+            display_results(reranked_nodes)
 
 if __name__ == "__main__":
   main()
