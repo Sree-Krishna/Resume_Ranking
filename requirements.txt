@@ -4,5 +4,4 @@ llama-index-readers-file
 llama-index-embeddings-huggingface
 llama-index-vector-stores-faiss
 llama-index-retrievers-bm25
-python==3.11
 streamlit==1.19.0
