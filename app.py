@@ -17,6 +17,7 @@ from hybrid_retriever import HybridRetriever
 from clean_data import TextCleaner, clean_job
 from llama_index.retrievers.bm25 import BM25Retriever
 from llama_index.core.postprocessor import SentenceTransformerRerank
+import asyncio
 
 # set the embedding
 # checkout Voyage embedding, lightweight and high performance
@@ -88,69 +89,41 @@ def main():
     job_description = st.text_area("Enter Job Description:", height=100)
     job_description = clean_job(job_description)
 
-    nodes = create_nodes()
-    storage_context = set_storage_context()
-    index = create_index(nodes, storage_context)
+    # nodes = create_nodes()
+    # storage_context = set_storage_context()
+    # index = create_index(nodes, storage_context)
 
-    # save index to disk
-    index.storage_context.persist()
+    # # save index to disk
+    # index.storage_context.persist()
 
-    # load index from disk
-    vector_store = FaissVectorStore.from_persist_dir("./storage")
-    storage_context = StorageContext.from_defaults(
-        vector_store=vector_store, persist_dir="./storage"
-    )
-    index = load_index_from_storage(storage_context=storage_context)
+    # # load index from disk
+    # vector_store = FaissVectorStore.from_persist_dir("./storage")
+    # storage_context = StorageContext.from_defaults(
+    #     vector_store=vector_store, persist_dir="./storage"
+    # )
+    # index = load_index_from_storage(storage_context=storage_context)
 
-    # set retriever
-    hybrid_retriever = set_retriever(nodes, index)
+    # # set retriever
+    # hybrid_retriever = set_retriever(nodes, index)
 
-    # set reranker
-    rerank_model = 'cross-encoder/ms-marco-MiniLM-L-2-v2'
-    # rerank_model = 'BAAI/bge-reranker-base'
-    reranker = SentenceTransformerRerank(top_n=20, model=rerank_model)
+    # # set reranker
+    # rerank_model = 'cross-encoder/ms-marco-MiniLM-L-2-v2'
+    # # rerank_model = 'BAAI/bge-reranker-base'
+    # reranker = SentenceTransformerRerank(top_n=20, model=rerank_model)
 
-    if st.button("Rank Resumes"):
-        # Preprocess and vectorize the job description
-        # job_description_vector = vectorizer.transform([job_description])[0]
+    # if st.button("Rank Resumes"):
+    #     # Preprocess and vectorize the job description
+    #     # job_description_vector = vectorizer.transform([job_description])[0]
 
-        retrieved_nodes = hybrid_retriever.retrieve(job_description)
-        st.subheader("Top 10 Matching Resumes:")
-        display_results(retrieved_nodes)
-        # for i, result in enumerate(retrieved_nodes):
-        #     resume_text = result.text
-        #     score = result.score
-        #     name = result.metadata['file_name']
-        #     st.write(f"{i+1}. {name} Resume (Score: {score:.2f})")
-        #     st.text(resume_text)
-        #     if i == 10:
-        #         break
-        reranked_nodes = reranker.postprocess_nodes(
-            retrieved_nodes,
-            query_bundle=QueryBundle(job_description),
-        )
-        st.subheader("Top 10 Matching Resumes Reranked:")
-        display_results(reranked_nodes)
-
-        # if reranked_nodes:
-        #     st.subheader("Top 10 Matching Resumes Reranked:")
-        #     final_list = {}
-        #     count = 0
-        #     for i in range(20):
-        #         count += 1
-        #         if reranked_nodes[i].metadata['file_name'] not in final_list:
-        #             final_list[reranked_nodes[i].metadata['file_name']] = reranked_nodes[i].score
-        #         if count == 10:
-        #             break
-        #     for key in final_list:
-        #         st.write(f"{key} Resume (Score: {final_list[key]:.2f})")
-                # score = result.score
-                # resume_text = result.text
-                # name = reranked_nodes[i].metadata['file_name']
-                # st.write(f"{i+1}. {name} Resume (Score: {score:.2f})")
-                # st.text(resume_text)
-        # else:
-        #     st.write("No matching resumes found.")
+    #     retrieved_nodes = hybrid_retriever.retrieve(job_description)
+    #     st.subheader("Top 10 Matching Resumes:")
+    #     display_results(retrieved_nodes)
+    #     reranked_nodes = reranker.postprocess_nodes(
+    #         retrieved_nodes,
+    #         query_bundle=QueryBundle(job_description),
+    #     )
+    #     st.subheader("Top 10 Matching Resumes Reranked:")
+    #     display_results(reranked_nodes)
 
 if __name__ == "__main__":
-  main()
+  asyncio.run(main())
