@@ -21,8 +21,8 @@ import asyncio
 
 # set the embedding
 # checkout Voyage embedding, lightweight and high performance
-# model_name = 'BAAI/bge-small-en-v1.5'
-model_name = 'sentence-transformers/all-MiniLM-L6-v2'
+model_name = 'BAAI/bge-small-en-v1.5'
+# model_name = 'sentence-transformers/all-MiniLM-L6-v2'
 Settings.embed_model = HuggingFaceEmbedding(model_name)
 embed_model = HuggingFaceEmbedding(model_name)
 
