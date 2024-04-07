@@ -1,5 +1,5 @@
 import streamlit as st
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+# from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.ingestion import IngestionPipeline, IngestionCache
 import faiss
@@ -22,27 +22,28 @@ import asyncio
 # set the embedding
 # checkout Voyage embedding, lightweight and high performance
 model_name = 'BAAI/bge-small-en-v1.5'
-# model_name = 'sentence-transformers/all-MiniLM-L6-v2'
-Settings.embed_model = HuggingFaceEmbedding(model_name)
-embed_model = HuggingFaceEmbedding(model_name)
+# # model_name = 'sentence-transformers/all-MiniLM-L6-v2'
+# Settings.embed_model = HuggingFaceEmbedding(model_name)
+# embed_model = HuggingFaceEmbedding(model_name)
+embed_model = ''
 
 # Function to preprocess and vectorize text (replace with more advanced NLP)
 def preprocess_text(text):
     return text.lower()
 
-def create_nodes(path='data/resumes'):
-    # create the pipeline with transformations
-    pipeline = IngestionPipeline(
-        transformations=[
-            TextCleaner(),
-            SentenceSplitter(chunk_size=512, chunk_overlap=10),
-            embed_model,
-        ]
-    )
-    documents = SimpleDirectoryReader(path).load_data()
-    nodes = pipeline.run(documents=documents)
-    # index = VectorStoreIndex.from_documents(documents, embed_model=embed_model)
-    return nodes
+# def create_nodes(path='data/resumes'):
+#     # create the pipeline with transformations
+#     pipeline = IngestionPipeline(
+#         transformations=[
+#             TextCleaner(),
+#             SentenceSplitter(chunk_size=512, chunk_overlap=10),
+#             embed_model,
+#         ]
+#     )
+#     documents = SimpleDirectoryReader(path).load_data()
+#     nodes = pipeline.run(documents=documents)
+#     # index = VectorStoreIndex.from_documents(documents, embed_model=embed_model)
+#     return nodes
 
 def set_storage_context(vetcorDb='faiss'):
   
@@ -126,4 +127,4 @@ def main():
     #     display_results(reranked_nodes)
 
 if __name__ == "__main__":
-  asyncio.run(main())
+  main()
