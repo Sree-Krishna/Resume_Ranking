@@ -5,4 +5,4 @@ llama-index-embeddings-huggingface
 llama-index-vector-stores-faiss
 llama-index-retrievers-bm25
 streamlit
-python=='3.12.2'
+python=='3.11'
