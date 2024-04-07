@@ -1,3 +1,11 @@
+import asyncio
+
+# Create a new event loop
+loop = asyncio.new_event_loop()
+
+# Set the event loop as the current event loop
+asyncio.set_event_loop(loop)
+
 import streamlit as st
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.core.node_parser import SentenceSplitter
@@ -63,7 +71,7 @@ def create_index(_nodes, _storage_context, documents=False):
         if documents:
             index = VectorStoreIndex.from_documents(documents=documents, storage_context=_storage_context)
         else:
-            index = index = VectorStoreIndex(_nodes, storage_context=_storage_context)
+            index = VectorStoreIndex(_nodes, storage_context=_storage_context)
         return index
 
 def set_retriever(nodes, index):
@@ -99,9 +107,8 @@ def main():
     storage_context = set_storage_context()
     with st.spinner(text="Loading the Streamlit Index – hang tight! This should take 1-2 minutes."):
         index = create_index(nodes, storage_context)
-
-    # save index to disk
-    index.storage_context.persist()
+        # save index to disk
+        index.storage_context.persist()
 
     # load index from disk
     vector_store = FaissVectorStore.from_persist_dir("./storage")

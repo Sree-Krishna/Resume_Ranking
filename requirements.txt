@@ -5,3 +5,4 @@ llama-index-embeddings-huggingface
 llama-index-vector-stores-faiss
 llama-index-retrievers-bm25
 streamlit
+nest_asyncio
