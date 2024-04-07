@@ -17,7 +17,9 @@ from hybrid_retriever import HybridRetriever
 from clean_data import TextCleaner, clean_job
 from llama_index.retrievers.bm25 import BM25Retriever
 from llama_index.core.postprocessor import SentenceTransformerRerank
-import asyncio
+import nest_asyncio
+
+nest_asyncio.apply()
 
 # set the embedding
 # checkout Voyage embedding, lightweight and high performance
@@ -55,12 +57,13 @@ def set_storage_context(vetcorDb='faiss'):
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
     return storage_context
 
-def create_index(nodes, storage_context, documents=False):
-    with st.spinner(text="Loading the Streamlit Index – hang tight! This should take 1-2 minutes."):
+@st.cache_resource(show_spinner=False)
+def create_index(_nodes, _storage_context, documents=False):
+        
         if documents:
-            index = VectorStoreIndex.from_documents(documents=documents, storage_context=storage_context)
+            index = VectorStoreIndex.from_documents(documents=documents, storage_context=_storage_context)
         else:
-            index = index = VectorStoreIndex(nodes, storage_context=storage_context)
+            index = index = VectorStoreIndex(_nodes, storage_context=_storage_context)
         return index
 
 def set_retriever(nodes, index):
@@ -94,7 +97,8 @@ def main():
 
     nodes = create_nodes()
     storage_context = set_storage_context()
-    index = create_index(nodes, storage_context)
+    with st.spinner(text="Loading the Streamlit Index – hang tight! This should take 1-2 minutes."):
+        index = create_index(nodes, storage_context)
 
     # save index to disk
     index.storage_context.persist()
@@ -119,15 +123,13 @@ def main():
         # job_description_vector = vectorizer.transform([job_description])[0]
         with st.spinner("processing..."):
             retrieved_nodes = hybrid_retriever.retrieve(job_description)
-            st.subheader("Top 10 Matching Resumes:")
-            display_results(retrieved_nodes)
-
             reranked_nodes = reranker.postprocess_nodes(
                 retrieved_nodes,
                 query_bundle=QueryBundle(job_description),
             )
-            st.subheader("Top 10 Matching Resumes Reranked:")
-            display_results(reranked_nodes)
+        st.subheader("Top 10 Matching Resumes:")
+        display_results(retrieved_nodes)
+        st.subheader("Top 10 Matching Resumes Reranked:")
+        display_results(reranked_nodes)
 
-if __name__ == "__main__":
-  main()
+main()
