@@ -9,8 +9,7 @@ class HybridRetriever(BaseRetriever):
     def _retrieve(self, query, **kwargs):
         # bm25_nodes = self.bm25_retriever.retrieve(query, **kwargs)
         vector_nodes = self.vector_retriever.retrieve(query, **kwargs)
-        bm25_nodes = vector_nodes 
-        
+        bm25_nodes = self.bm25_retriever.retrieve(query, **kwargs)
         # combine the two lists of nodes
         all_nodes = []
         node_ids = set()
