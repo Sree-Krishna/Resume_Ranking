@@ -3,6 +3,7 @@
 # Llama-Powered Resume Ranking
 
 This repository contains the code for a Streamlit application that utilizes a hybrid retrieval approach to rank resumes based on a provided job description.
+Check out the app here:- https://resume-ranking.streamlit.app/
 
 ## Features
 
